@@ -1,31 +1,27 @@
-import argparse
-from cProfile import label
-import time
-from pathlib import Path
-import threading
-import sys
+# encoding:utf-8
 import os
-import cv2
-# import torch
-#print('detect.py', torch.__version__)
-#print('detect.py', torch.__path__)
-
-# import torch.backends.cudnn as cudnn
-from numpy import random
+import math
+import random
+import sys
+import time
+import threading
 import numpy as np
-import shutil
-# from utils.torch_utils import select_device, load_classifier, time_synchronized
+import tensorflow as tf
+import cv2
 
-# from utils.datasets import *
-# from utils.utils import *
+import matplotlib.pyplot as plt
+import matplotlib.cm as mpcm
 
-import pyttsx3
+# sys.path.append('./SSD-Tensorflow/')
+from nets import ssd_vgg_300, ssd_common, np_methods
+from preprocessing import ssd_vgg_preprocessing
+
 import PyQt5.QtCore
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from window_xzc import Ui_Win_traffic
-from ssdpersonDetect import *
+from window_dancheng import Ui_Win_traffic
+# from ssdpersonDetect import *
 
 class MainWindow(Ui_Win_traffic, QMainWindow):
     # 基本配置不动，然后只动第三个界面
@@ -36,10 +32,30 @@ class MainWindow(Ui_Win_traffic, QMainWindow):
         self.setStyleSheet("#mainWindow{border-image:url(bg.jpg)}")
         self.output_size = 480
         self.model_size = 640
-        self.img2predict = ""
         self.device = 'cpu'
         # # 初始化视频读取线程
         self.vid_source = '0'  # 初始设置为摄像头
+
+
+        
+
+
+        def load_model(self):
+            config = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True)   # 自动选用设备
+            isess = tf.InteractiveSession(config = config)   # 创建session
+            slim = tf.contrib.slim # slim作为一种轻量级的tensorflow库，使得模型的构建，训练，测试都变得更加简单。
+            l_VOC_CLASS = [
+                'aeroplane',   'bicycle', 'bird',  'boat',      'bottle',
+                'bus',         'car',     'cat',   'chair',     'cow',
+                'diningTable', 'dog',     'horse', 'motorbike', 'person',
+                'pottedPlant', 'sheep',   'sofa',  'train',     'TV']
+
+
+
+
+
+
+
         self.stopEvent = threading.Event()
         self.stopEvent.clear()
         self.stopEvent2 = threading.Event()
@@ -53,19 +69,16 @@ class MainWindow(Ui_Win_traffic, QMainWindow):
 
         # -----------页面切换按钮-----------
         self.pushButton.clicked.connect(self.open_cam)
-        self.pushButton_2.clicked.connect(self.stop_cam)
-        # self.pushButton_3.clicked.connect(self.show_camera)
+        self.pushButton_2.clicked.connect(self.show_video)
+        self.pushButton_3.clicked.connect(self.show_camera)
         # -----------页面切换按钮-----------
 
         # -----------功能按钮-----------
        
 
         self.show_picture_page.setCurrentIndex(0)
-        
 
         # -----------功能按钮-----------
-
-        
 
     def show_photo(self):
         self.show_picture_page.setCurrentIndex(0)
@@ -77,13 +90,6 @@ class MainWindow(Ui_Win_traffic, QMainWindow):
     def show_camera(self):
         self.stopEvent2.set()
         self.show_picture_page.setCurrentIndex(2)
-    
-    def warning_voice(self):
-        self.timer_vol.start(1000)
-
-    def voice(self):
-        pyttsx3.speak('发现有人')
-
 
     def open_cam(self):
         if not self.CAM_OPEN_FLAG:
@@ -118,22 +124,15 @@ class MainWindow(Ui_Win_traffic, QMainWindow):
             reply = QMessageBox.warning(self, 'Error', 'The camera is not opened!',
                                         QMessageBox.Yes, QMessageBox.Yes)
 
-    def show_frame( self):
+    def show_frame(self):
         if (self.cap.isOpened()):
             ret, self.frame = self.cap.read()
             self.frame = cv2.flip(self.frame,1)
             if ret:
-                self.frame,self.label,rscores= process_image(self.frame)
+                self.frame = process_image(self.frame)
                 cv2.imwrite("images/tmp/test_camera.jpg", self.frame)
-                self.label_page1.setPixmap(QPixmap("images/tmp/test_camera.jpg"))
-                self.data_log.append(str(rscores))
-                if self.label != [] and (15 in self.label):
-                    pyttsx3.speak('发现有人')
-
-
-        
-
-
+                self.label.setPixmap(QPixmap("images/tmp/test_camera.jpg"))
+    
 
     # def infer():
 
