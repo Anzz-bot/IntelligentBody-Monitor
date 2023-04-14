@@ -1,0 +1,24 @@
+一、运行说明
+
+1.建议新建python虚拟环境，在虚拟环境中安装
+2.python 3.6.8 成功运行，其他版本可自行尝试
+
+
+二、第三方库安装
+
+pip install -r requirements.txt
+
+三、可视化界面使用
+
+运行UI.py文件即可
+
+python UI.py
+
+四、数据集
+
+Pascal VOC2012作为基准数据之一，在对象检测、图像分割网络对比实验与模型效果评估中被频频使用。见下面链接
+https://www.sohu.com/a/333069232_823210
+
+数据集资源
+链接：https://pan.baidu.com/s/1x2ojhM-gwwJtkNTevSQlKQ 
+提取码：bycv
